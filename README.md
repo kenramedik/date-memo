@@ -1,42 +1,46 @@
-# 날짜별 메모 (DateMemo)
+# DateMemo
 
-하루 단위로 할 일을 기록하고 완료 표시를 하는 Windows 데스크톱 앱입니다.
+A Windows desktop app for keeping a to-do list one day at a time.
 
-## 기능
+Each day gets its own list. Move between days with the arrows, the calendar, or the left/right arrow keys, and the app remembers what belongs to each date.
 
-- **날짜별 저장** — 화살표·달력·`오늘` 버튼으로 날짜를 오가며 그날의 할 일을 관리합니다. 좌우 방향키로도 이동합니다
-- **달력** — 날짜마다 메모 개수를 표시하고, 대한민국 공휴일(2025~2030)을 붉은 톤으로 보여줍니다. 마우스를 올리면 휴일 이름이 툴팁으로 뜹니다
-- **고정** — 중요한 항목을 날짜와 무관하게 상단에 고정합니다. 3개씩 페이징되며 휠로도 넘길 수 있고, 원래 날짜로 바로 이동할 수 있습니다
-- **검색** — `Ctrl+F`로 전체 날짜의 메모를 찾습니다. 일치 부분이 하이라이트되고, 결과를 누르면 해당 날짜로 이동합니다
-- **색상** — 항목마다 8가지 색을 지정해 구분합니다
-- **순서 변경** — 항목을 드래그해 재배치합니다
-- **삭제 잠금** — 실수로 지우는 것을 막습니다. 잠금 중에는 삭제 버튼이 나타나지 않습니다
-- **항상 위에 표시** / **최소화 시 트레이로** — 설정 메뉴에서 켜고 끕니다
+## Features
 
-## 설치
+- **Day-by-day lists** — every date holds its own items; jump around with the arrows, the `오늘` (Today) button, or the calendar
+- **Calendar** — shows how many items each day holds, and marks South Korean public holidays (2025–2030) with a red tint and a tooltip naming the holiday
+- **Pinning** — keep important items at the top regardless of the date. Paged three at a time, scrollable with the mouse wheel, with a button that jumps to the item's original date
+- **Search** — `Ctrl+F` searches every date at once. Matches are highlighted, and clicking a result jumps to that day
+- **Colors** — tag any item with one of eight colors
+- **Reordering** — drag items to rearrange them
+- **Delete lock** — guards against accidental deletion; while it is on, the delete button is not rendered at all
+- **Always on top** and **minimize to tray** — both toggled from the Settings menu
 
-[Releases](../../releases)에서 받으세요.
+The interface is in Korean.
 
-- `DateMemo-Setup-x.y.z.exe` — 설치형. 관리자 권한이 필요 없고 바탕화면·시작메뉴 바로가기를 만듭니다
-- `DateMemo-x.y.z-win.zip` — 무설치. 원하는 곳에 풀고 `DateMemo.exe`를 실행합니다
+## Install
 
-서명되지 않은 실행 파일이라 첫 실행 시 SmartScreen 경고가 나올 수 있습니다 (`추가 정보` → `실행`).
+Grab a build from [Releases](../../releases).
 
-## 개발
+- `DateMemo-Setup-x.y.z.exe` — installer. Runs without administrator rights and creates desktop and Start menu shortcuts
+- `DateMemo-x.y.z-win.zip` — portable. Unpack anywhere and run `DateMemo.exe`
+
+The executable is unsigned, so SmartScreen may warn on first launch (`More info` → `Run anyway`).
+
+## Development
 
 ```bash
 npm install
-npm start        # 개발 모드 실행
-npm run icon     # assets 아이콘 재생성
-npm run dist     # 설치본 + zip 빌드
+npm start        # run in development
+npm run icon     # regenerate the icons in assets/
+npm run dist     # build the installer and the zip
 ```
 
-데이터는 `%APPDATA%\DateMemo`에 저장됩니다.
+Data lives in `%APPDATA%\DateMemo`.
 
-## 기술
+## Built with
 
-Electron 33 + 바닐라 HTML/CSS/JS. 프레임워크나 번들러 없이 `index.html` 한 파일이 화면 전체를 담당합니다.
+Electron 33 and plain HTML, CSS, and JavaScript — no framework, no bundler. `index.html` holds the entire interface.
 
-## 라이선스
+## License
 
-MIT. 본문 글꼴은 [Pretendard](https://github.com/orioncactus/pretendard) (SIL Open Font License 1.1)를 포함합니다.
+MIT. Bundles [Pretendard](https://github.com/orioncactus/pretendard), licensed under the SIL Open Font License 1.1.
