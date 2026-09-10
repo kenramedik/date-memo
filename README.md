@@ -14,8 +14,9 @@ Each day gets its own list. Move between days with the arrows, the calendar, or 
 - **Reordering** — drag items to rearrange them
 - **Delete lock** — guards against accidental deletion; while it is on, the delete button is not rendered at all
 - **Always on top** and **minimize to tray** — both toggled from the Settings menu
+- **English and Korean** — the app asks which you want on first launch, and the `Language` menu switches at any time
 
-The interface is in Korean.
+Holiday data covers South Korean public holidays only.
 
 ## Install
 

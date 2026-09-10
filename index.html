@@ -739,9 +739,10 @@ footer {
 <body>
 <div id="app">
   <div class="menubar" id="menu-bar" hidden>
-    <button class="mb-item" data-menu="file">파일</button>
-    <button class="mb-item" data-menu="settings">설정</button>
-    <button class="mb-item" data-menu="help">도움말</button>
+    <button class="mb-item" data-menu="file"></button>
+    <button class="mb-item" data-menu="settings"></button>
+    <button class="mb-item" data-menu="language">Language</button>
+    <button class="mb-item" data-menu="help"></button>
   </div>
 
   <header>
@@ -849,7 +850,90 @@ footer {
 
 <script>
 const STORE = 'memo-by-date-v1';
-const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+
+/* ─── 다국어 ─── */
+const I18N = {
+  ko: {
+    dow: ['일', '월', '화', '수', '목', '금', '토'],
+    dowShort: ['일', '월', '화', '수', '목', '금', '토'],
+    dowLong: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'],
+    ym: (y, m) => `${y}년 ${m}월`,
+    dayNum: d => `${d}일`,
+    md: (m, d) => `${m}월 ${d}일`,
+    full: (y, m, d, w) => `${y}년 ${m}월 ${d}일 (${w})`,
+    menuFile: '파일', menuSettings: '설정', menuHelp: '도움말',
+    exit: '종료', alwaysOnTop: '항상 위에 표시', minToTray: '최소화 시 트레이로',
+    deleteLock: '삭제 잠금', about: '정보',
+    openCalendar: '달력 열기', closeCalendar: '달력 접기 (Esc)',
+    prevDay: '이전 날 (←)', nextDay: '다음 날 (→)',
+    prevMonth: '이전 달', nextMonth: '다음 달',
+    today: '오늘', searchTip: '검색 (Ctrl+F)',
+    addPlaceholder: '할 일을 입력하세요', addTip: '추가 (Enter)',
+    emptyTitle: '이 날은 비어 있습니다', emptySub: '아래에 입력해 할 일을 추가하세요',
+    dragTip: '드래그해서 순서 변경', edit: '수정', del: '삭제',
+    setColor: '색상 지정', colorIs: c => `색상: ${c}`, noColor: '색상 없음',
+    pin: '상단에 고정', unpin: '고정 해제',
+    pinned: n => `고정됨 ${n}`, prev: '이전', next: '다음',
+    addedOn: s => `${s}에 추가됨`, goTo: s => `${s}로 이동`,
+    countTip: (n, done) => `메모 ${n}개 · 완료 ${done}개`,
+    searchPlaceholder: '전체 메모에서 검색', close: '닫기 (Esc)',
+    hits: n => `${n}건`,
+    searchTitle: '전체 메모에서 검색', searchSub: '모든 날짜의 항목을 찾습니다',
+    noHitTitle: '검색 결과가 없습니다', noHitSub: '다른 낱말로 찾아보세요',
+    clickToOpen: '눌러서 이동',
+    colors: { red: '빨강', orange: '주황', amber: '노랑', green: '초록',
+              teal: '청록', blue: '파랑', purple: '보라', gray: '회색' },
+  },
+  en: {
+    dow: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+    dowShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    dowLong: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    ym: (y, m) => `${MONTHS[m - 1]} ${y}`,
+    dayNum: d => `${d}`,
+    md: (m, d) => `${MONTHS[m - 1].slice(0, 3)} ${d}`,
+    full: (y, m, d, w) => `${w}, ${MONTHS[m - 1]} ${d}, ${y}`,
+    menuFile: 'File', menuSettings: 'Settings', menuHelp: 'Help',
+    exit: 'Exit', alwaysOnTop: 'Always on Top', minToTray: 'Minimize to Tray',
+    deleteLock: 'Delete Lock', about: 'About',
+    openCalendar: 'Open calendar', closeCalendar: 'Close calendar (Esc)',
+    prevDay: 'Previous day (←)', nextDay: 'Next day (→)',
+    prevMonth: 'Previous month', nextMonth: 'Next month',
+    today: 'Today', searchTip: 'Search (Ctrl+F)',
+    addPlaceholder: 'Add a task', addTip: 'Add (Enter)',
+    emptyTitle: 'Nothing here yet', emptySub: 'Add a task below',
+    dragTip: 'Drag to reorder', edit: 'Edit', del: 'Delete',
+    setColor: 'Set color', colorIs: c => `Color: ${c}`, noColor: 'No color',
+    pin: 'Pin to top', unpin: 'Unpin',
+    pinned: n => `Pinned ${n}`, prev: 'Previous', next: 'Next',
+    addedOn: s => `Added on ${s}`, goTo: s => `Go to ${s}`,
+    countTip: (n, done) => `${n} item${n > 1 ? 's' : ''} · ${done} done`,
+    searchPlaceholder: 'Search all notes', close: 'Close (Esc)',
+    hits: n => `${n} result${n === 1 ? '' : 's'}`,
+    searchTitle: 'Search all notes', searchSub: 'Looks through every date',
+    noHitTitle: 'No results', noHitSub: 'Try a different word',
+    clickToOpen: 'click to open',
+    colors: { red: 'Red', orange: 'Orange', amber: 'Yellow', green: 'Green',
+              teal: 'Teal', blue: 'Blue', purple: 'Purple', gray: 'Gray' },
+  },
+};
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+
+// 공휴일 표는 한국어 이름으로 저장하고, 영어일 때만 이름을 옮긴다.
+const HOLIDAY_EN = {
+  '신정': "New Year's Day", '설날': 'Seollal', '설날 연휴': 'Seollal Holiday',
+  '삼일절': 'Independence Movement Day', '대체공휴일': 'Substitute Holiday',
+  '어린이날': "Children's Day", '부처님오신날': "Buddha's Birthday",
+  '현충일': 'Memorial Day', '제헌절': 'Constitution Day', '광복절': 'Liberation Day',
+  '추석': 'Chuseok', '추석 연휴': 'Chuseok Holiday', '개천절': 'National Foundation Day',
+  '한글날': 'Hangul Day', '성탄절': 'Christmas',
+};
+
+let lang = 'ko';
+const L = () => I18N[lang];
+const holidayName = k => lang === 'ko' ? k
+  : k.split(' · ').map(p => HOLIDAY_EN[p] || p).join(' · ');
 
 // 대한민국 관공서 공휴일 (2025~2030). 음력·대체공휴일이 매년 달라 연도별로 명시한다.
 const HOLIDAYS = {
@@ -942,16 +1026,10 @@ let searchOpen = false;
 let menuState = { alwaysOnTop: false, minimizeToTray: true, deleteLock: false };
 
 const COLORS = {
-  red:    { name: '빨강', hex: '#c2564d' },
-  orange: { name: '주황', hex: '#c07a3c' },
-  amber:  { name: '노랑', hex: '#a3872c' },
-  green:  { name: '초록', hex: '#4d8a5f' },
-  teal:   { name: '청록', hex: '#0e7490' },
-  blue:   { name: '파랑', hex: '#3d6ba8' },
-  purple: { name: '보라', hex: '#7a5ea8' },
-  gray:   { name: '회색', hex: '#78786f' },
+  red: '#c2564d', orange: '#c07a3c', amber: '#a3872c', green: '#4d8a5f',
+  teal: '#0e7490', blue: '#3d6ba8', purple: '#7a5ea8', gray: '#78786f',
 };
-const colorOf = it => (it.color && COLORS[it.color]) ? COLORS[it.color].hex : null;
+const colorOf = it => (it.color && COLORS[it.color]) ? COLORS[it.color] : null;
 
 function paintColor(row, it) {
   const hex = colorOf(it);
@@ -989,7 +1067,32 @@ function firstOfMonth(k) {
 const items = k => data[k] || [];
 
 /* ─── 렌더링 ─── */
+// HTML에 박아둔 문구는 언어가 바뀔 때마다 다시 채운다.
+function applyStaticText() {
+  const set = (id, attr, val) => document.getElementById(id).setAttribute(attr, val);
+  const bar = document.getElementById('menu-bar');
+  bar.querySelector('[data-menu="file"]').textContent = L().menuFile;
+  bar.querySelector('[data-menu="settings"]').textContent = L().menuSettings;
+  bar.querySelector('[data-menu="help"]').textContent = L().menuHelp;
+
+  set('monthBtn', 'title', L().openCalendar);
+  set('searchBtn', 'title', L().searchTip);
+  set('prev', 'title', L().prevDay);
+  set('next', 'title', L().nextDay);
+  set('calPrev', 'title', L().prevMonth);
+  set('calNext', 'title', L().nextMonth);
+  set('calClose', 'title', L().closeCalendar);
+  set('pinPrev', 'title', L().prev);
+  set('pinNext', 'title', L().next);
+  set('search-input', 'placeholder', L().searchPlaceholder);
+  set('search-close', 'title', L().close);
+  set('input', 'placeholder', L().addPlaceholder);
+  set('add', 'title', L().addTip);
+  todayBtn.textContent = L().today;
+}
+
 function render() {
+  applyStaticText();
   list.hidden = searchOpen;
   results.hidden = !searchOpen;
   renderHeader();
@@ -1053,22 +1156,22 @@ function renderSearch() {
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="1.3" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/></svg>
         <div>
-          <div class="t">전체 메모에서 검색</div>
-          <div class="s">모든 날짜의 항목을 찾습니다</div>
+          <div class="t">${L().searchTitle}</div>
+          <div class="s">${L().searchSub}</div>
         </div>
       </div>`;
     return;
   }
 
   const hits = searchAll(q);
-  searchCount.textContent = `${hits.length}건`;
+  searchCount.textContent = L().hits(hits.length);
 
   if (!hits.length) {
     results.innerHTML = `
       <div class="empty">
         <div>
-          <div class="t">검색 결과가 없습니다</div>
-          <div class="s">다른 낱말로 찾아보세요</div>
+          <div class="t">${L().noHitTitle}</div>
+          <div class="s">${L().noHitSub}</div>
         </div>
       </div>`;
     return;
@@ -1081,10 +1184,10 @@ function renderSearch() {
     row.innerHTML = `
       <span class="box">${ICON.check}</span>
       <span class="txt"></span>
-      <span class="sr-date">${d.getMonth() + 1}월 ${d.getDate()}일</span>`;
+      <span class="sr-date">${L().md(d.getMonth() + 1, d.getDate())}</span>`;
     row.querySelector('.txt').append(highlight(it.text, q));
     paintColor(row, it);
-    row.dataset.tip = `${dateLabel(date)} · 눌러서 이동`;
+    row.dataset.tip = `${dateLabel(date)} · ${L().clickToOpen}`;
     row.classList.add('tip-l');
 
     row.querySelector('.box').onclick = e => {
@@ -1100,7 +1203,7 @@ function renderSearch() {
 const PIN_PER_PAGE = 3;
 const dateLabel = k => {
   const d = parse(k);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`;
+  return L().full(d.getFullYear(), d.getMonth() + 1, d.getDate(), L().dowLong[d.getDay()]);
 };
 
 function allPinned() {
@@ -1120,7 +1223,7 @@ function renderPinned() {
 
   const pages = pinPages = Math.ceil(pins.length / PIN_PER_PAGE);
   pinPage = Math.max(0, Math.min(pinPage, pages - 1));
-  pinTitle.textContent = `고정됨 ${pins.length}`;
+  pinTitle.textContent = L().pinned(pins.length);
   pinPager.hidden = pages < 2;
   pinPageLabel.textContent = `${pinPage + 1}/${pages}`;
   pinPrev.disabled = pinPage === 0;
@@ -1130,7 +1233,7 @@ function renderPinned() {
   pins.slice(pinPage * PIN_PER_PAGE, (pinPage + 1) * PIN_PER_PAGE).forEach(({ date, it }) => {
     const row = document.createElement('div');
     row.className = 'pin-item tip-l' + (it.done ? ' done' : '');
-    row.dataset.tip = `${dateLabel(date)}에 추가됨`;
+    row.dataset.tip = L().addedOn(dateLabel(date));
     row.innerHTML = `
       <span class="box">${ICON.check}</span>
       <span class="txt"></span>
@@ -1142,12 +1245,12 @@ function renderPinned() {
     paintColor(row, it);
 
     const go = row.querySelector('.go');
-    go.dataset.tip = `${dateLabel(date)}로 이동`;
+    go.dataset.tip = L().goTo(dateLabel(date));
     go.classList.add('tip-r');
     go.onclick = e => { e.stopPropagation(); goto(date); };
 
     const off = row.querySelector('.off');
-    off.dataset.tip = '고정 해제';
+    off.dataset.tip = L().unpin;
     off.classList.add('tip-r');
     off.onclick = e => {
       e.stopPropagation();
@@ -1163,9 +1266,9 @@ function renderPinned() {
 function renderHeader() {
   const d = parse(cur);
   const w = d.getDay();
-  ymLabel.textContent = `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+  ymLabel.textContent = L().ym(d.getFullYear(), d.getMonth() + 1);
   dayTitle.innerHTML =
-    `${d.getDate()}일<span class="dow ${w === 0 ? 'sun' : w === 6 ? 'sat' : ''}">${DOW[w]}요일</span>`;
+    `${L().dayNum(d.getDate())}<span class="dow ${w === 0 ? 'sun' : w === 6 ? 'sat' : ''}">${L().dowLong[w]}</span>`;
 
   todayBtn.disabled = cur === key(new Date());
 
@@ -1190,8 +1293,8 @@ function renderList() {
           <rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M8 2.5v4M16 2.5v4M3.5 10h17"/>
         </svg>
         <div>
-          <div class="t">이 날은 비어 있습니다</div>
-          <div class="s">아래에 입력해 할 일을 추가하세요</div>
+          <div class="t">${L().emptyTitle}</div>
+          <div class="s">${L().emptySub}</div>
         </div>
       </div>`;
     return;
@@ -1202,20 +1305,20 @@ function renderList() {
     const hex = colorOf(it);
     row.className = 'item' + (it.done ? ' done' : '') + (it.pinnedAt ? ' pinned' : '');
     row.innerHTML = `
-      <span class="grip" title="드래그해서 순서 변경">${ICON.grip}</span>
+      <span class="grip" title="${L().dragTip}">${ICON.grip}</span>
       <span class="box">${ICON.check}</span>
       <span class="txt"></span>
       <span class="row-act">
         <button class="clr tip-r">${hex ? ICON.dot : ICON.ring}</button>
         <button class="pin tip-r">${it.pinnedAt ? ICON.pinOn : ICON.pin}</button>
-        <button class="ed tip-r" title="수정">${ICON.pen}</button>
-        ${menuState.deleteLock ? '' : `<button class="rm tip-r" data-tip="삭제">${ICON.trash}</button>`}
+        <button class="ed tip-r" title="${L().edit}">${ICON.pen}</button>
+        ${menuState.deleteLock ? '' : `<button class="rm tip-r" data-tip="${L().del}">${ICON.trash}</button>`}
       </span>`;
     row.querySelector('.txt').textContent = it.text;
     paintColor(row, it);
 
     const clrBtn = row.querySelector('.clr');
-    clrBtn.dataset.tip = hex ? `색상: ${COLORS[it.color].name}` : '색상 지정';
+    clrBtn.dataset.tip = hex ? L().colorIs(L().colors[it.color]) : L().setColor;
     if (hex) clrBtn.style.color = hex;
     clrBtn.onclick = e => { e.stopPropagation(); openColorPop(clrBtn, it); };
 
@@ -1226,7 +1329,7 @@ function renderList() {
     };
 
     const pinBtn = row.querySelector('.pin');
-    pinBtn.dataset.tip = it.pinnedAt ? '고정 해제' : '상단에 고정';
+    pinBtn.dataset.tip = it.pinnedAt ? L().unpin : L().pin;
     pinBtn.onclick = e => {
       e.stopPropagation();
       if (it.pinnedAt) delete it.pinnedAt;
@@ -1369,8 +1472,8 @@ function openColorPop(btn, it) {
     };
     colorPop.appendChild(b);
   };
-  add('', '', '색상 없음');
-  Object.entries(COLORS).forEach(([k, c]) => add(k, c.hex, c.name));
+  add('', '', L().noColor);
+  Object.entries(COLORS).forEach(([k, hex]) => add(k, hex, L().colors[k]));
 
   colorPop.hidden = false;
   const r = btn.getBoundingClientRect();
@@ -1410,10 +1513,10 @@ function startEdit(row, it) {
 
 function renderCal() {
   const y = calMonth.getFullYear(), m = calMonth.getMonth();
-  calLabel.textContent = `${y}년 ${m + 1}월`;
+  calLabel.textContent = L().ym(y, m + 1);
   calGrid.innerHTML = '';
 
-  DOW.forEach((w, i) => {
+  L().dow.forEach((w, i) => {
     const h = document.createElement('div');
     h.className = 'cal-dow' + (i === 0 ? ' sun' : i === 6 ? ' sat' : '');
     h.textContent = w;
@@ -1453,8 +1556,8 @@ function renderCal() {
     }
 
     const tip = [
-      holiday,
-      arr.length ? `메모 ${arr.length}개 · 완료 ${arr.filter(x => x.done).length}개` : null,
+      holiday ? holidayName(holiday) : null,
+      arr.length ? L().countTip(arr.length, arr.filter(x => x.done).length) : null,
     ].filter(Boolean).join('  ·  ');
     if (tip) cell.dataset.tip = tip;
 
@@ -1565,20 +1668,25 @@ input.focus();
 render();
 
 /* ─── 메뉴바 ─── */
-const MENUS = {
+// 메뉴 이름은 언어에 따라 바뀌지만, Language 메뉴만은 항상 영어로 둔다.
+const menus = () => ({
   file: [
-    { label: '종료', accel: 'Ctrl+Q', action: 'quit' },
+    { label: L().exit, accel: 'Ctrl+Q', action: 'quit' },
   ],
   settings: [
-    { label: '항상 위에 표시', accel: 'Ctrl+T', action: 'toggleAlwaysOnTop', check: 'alwaysOnTop' },
-    { label: '최소화 시 트레이로', action: 'toggleMinimizeToTray', check: 'minimizeToTray' },
+    { label: L().alwaysOnTop, accel: 'Ctrl+T', action: 'toggleAlwaysOnTop', check: 'alwaysOnTop' },
+    { label: L().minToTray, action: 'toggleMinimizeToTray', check: 'minimizeToTray' },
     { sep: true },
-    { label: '삭제 잠금', action: 'toggleDeleteLock', check: 'deleteLock' },
+    { label: L().deleteLock, action: 'toggleDeleteLock', check: 'deleteLock' },
+  ],
+  language: [
+    { label: '한국어', action: 'langKo', checkIf: () => lang === 'ko' },
+    { label: 'English', action: 'langEn', checkIf: () => lang === 'en' },
   ],
   help: [
-    { label: '정보', action: 'about' },
+    { label: L().about, action: 'about' },
   ],
-};
+});
 const TICK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 6.5"/></svg>';
 
 // id 기반 암묵 전역 대신 명시적으로 잡는다 - window.menubar는 브라우저 내장 BarProp이다.
@@ -1593,7 +1701,7 @@ function openMenu(name) {
   menuBar.querySelectorAll('.mb-item').forEach(b => b.classList.toggle('open', b === btn));
 
   menuPop.innerHTML = '';
-  MENUS[name].forEach(spec => {
+  menus()[name].forEach(spec => {
     if (spec.sep) {
       const s = document.createElement('div');
       s.className = 'mi-sep';
@@ -1602,8 +1710,9 @@ function openMenu(name) {
     }
     const mi = document.createElement('button');
     mi.className = 'mi';
+    const ticked = spec.checkIf ? spec.checkIf() : (spec.check && menuState[spec.check]);
     mi.innerHTML =
-      (spec.check && menuState[spec.check] ? `<span class="tick">${TICK}</span>` : '') +
+      (ticked ? `<span class="tick">${TICK}</span>` : '') +
       `<span></span>` +
       (spec.accel ? `<span class="accel">${spec.accel}</span>` : '');
     mi.querySelector('span:not(.tick):not(.accel)').textContent = spec.label;
@@ -1611,6 +1720,7 @@ function openMenu(name) {
       closeMenu();
       if (!window.appMenu) return;
       menuState = await appMenu.run(spec.action);
+      lang = menuState.lang;
       render();
     };
     menuPop.appendChild(mi);
@@ -1645,9 +1755,10 @@ addEventListener('blur', () => { closeMenu(); closeColorPop(); });
 
 if (window.appMenu) {
   menuBar.hidden = false;
-  appMenu.state().then(s => { menuState = s; render(); });
+  appMenu.state().then(s => { menuState = s; lang = s.lang; render(); });
   appMenu.onState(s => {
     menuState = s;
+    lang = s.lang;
     render();
     if (menuOpen) openMenu(menuOpen);
   });

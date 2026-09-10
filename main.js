@@ -2,13 +2,36 @@ const { app, BrowserWindow, Menu, Tray, nativeImage, nativeTheme, dialog, ipcMai
 const path = require('path');
 const fs = require('fs');
 
-const APP_TITLE = '날짜별 메모';
 const AUTHOR = 'goni';
+
+const T = {
+  ko: {
+    appTitle: '날짜별 메모',
+    open: '열기',
+    alwaysOnTop: '항상 위에 표시',
+    exit: '종료',
+    about: '정보',
+    createdBy: '제작자',
+    aboutBody: '하루 단위로 메모를 남기고 완료 표시를 할 수 있습니다.',
+    ok: '확인',
+  },
+  en: {
+    appTitle: 'DateMemo',
+    open: 'Open',
+    alwaysOnTop: 'Always on Top',
+    exit: 'Exit',
+    about: 'About',
+    createdBy: 'Created by',
+    aboutBody: 'Keep a to-do list one day at a time.',
+    ok: 'OK',
+  },
+};
 
 let win = null;
 let tray = null;
 
-const settings = { alwaysOnTop: false, minimizeToTray: true, deleteLock: true, bounds: null };
+const settings = { lang: null, alwaysOnTop: false, minimizeToTray: true, deleteLock: true, bounds: null };
+const t = key => T[settings.lang === 'en' ? 'en' : 'ko'][key];
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 
 function loadSettings() {
@@ -22,7 +45,16 @@ function loadIcon(file) {
   return nativeImage.createFromBuffer(fs.readFileSync(path.join(__dirname, 'assets', file)));
 }
 
-const titleText = () => `${APP_TITLE}  v${app.getVersion()}`;
+const titleText = () => `${t('appTitle')}  v${app.getVersion()}`;
+
+function setLang(value) {
+  settings.lang = value;
+  saveSettings();
+  if (win && !win.isDestroyed()) win.setTitle(titleText());
+  if (tray) tray.setToolTip(titleText());
+  applyMenus();
+  pushState();
+}
 
 /* ── 설정 토글 ── */
 function setAlwaysOnTop(value) {
@@ -46,6 +78,7 @@ function setDeleteLock(value) {
 
 // 메뉴바는 HTML로 그리므로, 렌더러가 체크 상태를 알아야 한다.
 const menuState = () => ({
+  lang: settings.lang === 'en' ? 'en' : 'ko',
   alwaysOnTop: settings.alwaysOnTop,
   minimizeToTray: settings.minimizeToTray,
   deleteLock: settings.deleteLock,
@@ -81,15 +114,15 @@ function showWindow() {
 function applyMenus() {
   if (tray) {
     tray.setContextMenu(Menu.buildFromTemplate([
-      { label: '열기', click: showWindow },
+      { label: t('open'), click: showWindow },
       {
-        label: '항상 위에 표시',
+        label: t('alwaysOnTop'),
         type: 'checkbox',
         checked: settings.alwaysOnTop,
         click: item => setAlwaysOnTop(item.checked),
       },
       { type: 'separator' },
-      { label: '종료', role: 'quit' },
+      { label: t('exit'), role: 'quit' },
     ]));
   }
 }
@@ -97,11 +130,26 @@ function applyMenus() {
 function showAbout() {
   dialog.showMessageBox(win, {
     type: 'info',
-    title: '정보',
-    message: `${APP_TITLE}   v${app.getVersion()}`,
-    detail: `제작자: ${AUTHOR}\nElectron ${process.versions.electron}\n\n하루 단위로 메모를 남기고 완료 표시를 할 수 있습니다.`,
-    buttons: ['확인'],
+    title: t('about'),
+    message: `${t('appTitle')}   v${app.getVersion()}`,
+    detail: `${t('createdBy')}: ${AUTHOR}\nElectron ${process.versions.electron}\n\n${t('aboutBody')}`,
+    buttons: [t('ok')],
   });
+}
+
+// 최초 실행 - 어느 언어인지 모르니 양쪽 언어로 묻는다.
+function askLanguage() {
+  const i = dialog.showMessageBoxSync({
+    type: 'question',
+    title: 'DateMemo',
+    message: '언어를 선택하세요 / Choose a language',
+    buttons: ['한국어', 'English'],
+    defaultId: 0,
+    cancelId: 0,
+    noLink: true,
+  });
+  settings.lang = i === 1 ? 'en' : 'ko';
+  saveSettings();
 }
 
 /* ── 창 ── */
@@ -158,6 +206,7 @@ if (!app.requestSingleInstanceLock()) {
     nativeTheme.themeSource = 'light';
     Menu.setApplicationMenu(null);
     loadSettings();
+    if (settings.lang !== 'ko' && settings.lang !== 'en') askLanguage();
     createWindow();
   });
 
@@ -170,6 +219,8 @@ if (!app.requestSingleInstanceLock()) {
       case 'toggleAlwaysOnTop': setAlwaysOnTop(!settings.alwaysOnTop); break;
       case 'toggleMinimizeToTray': setMinimizeToTray(!settings.minimizeToTray); break;
       case 'toggleDeleteLock': setDeleteLock(!settings.deleteLock); break;
+      case 'langKo': setLang('ko'); break;
+      case 'langEn': setLang('en'); break;
       case 'about': showAbout(); break;
     }
     return menuState();
