@@ -594,6 +594,41 @@ body.dragging-active * { cursor: grabbing !important; }
 }
 .item.done .txt { color: var(--text-3); text-decoration: line-through; text-decoration-thickness: 1px; }
 
+/* 드랍 - 완료와 구분되게 회색으로 처리한다 */
+.item.dropped { background: transparent; box-shadow: none; border-color: transparent; }
+.item.dropped:hover { background: var(--surface-hover); border-color: var(--border); box-shadow: none; }
+.item.dropped .box,
+.pin-item.dropped .box,
+.sr-item.dropped .box { background: var(--text-3); border-color: var(--text-3); color: #fff; }
+.item.dropped .txt,
+.pin-item.dropped .txt,
+.sr-item.dropped .txt {
+  color: var(--text-3);
+  opacity: .72;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.item[data-color].dropped { background: transparent; }
+.item[data-color].dropped:hover { background: var(--surface-hover); }
+
+/* 다른 날짜에서 넘어온 항목 */
+.carry {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 99px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.item.carried { border-style: dashed; box-shadow: none; }
+.item.carried:hover { box-shadow: var(--shadow-sm); }
+
 .row-act { display: flex; gap: 1px; }
 .row-act > * { opacity: 0; transition: opacity .13s; }
 .item:hover .row-act > *, .item:focus-within .row-act > * { opacity: 1; }
@@ -875,7 +910,8 @@ const I18N = {
     pin: '상단에 고정', unpin: '고정 해제',
     pinned: n => `고정됨 ${n}`, prev: '이전', next: '다음',
     addedOn: s => `${s}에 추가됨`, goTo: s => `${s}로 이동`,
-    countTip: (n, done) => `메모 ${n}개 · 완료 ${done}개`,
+    countTip: (n, done) => `메모 ${n}개 · 처리 ${done}개`,
+    carriedFrom: s => `${s}에서 넘어옴 · 확인할 때까지 평일 3일마다 다시 나타납니다`,
     searchPlaceholder: '전체 메모에서 검색', close: '닫기 (Esc)',
     hits: n => `${n}건`,
     searchTitle: '전체 메모에서 검색', searchSub: '모든 날짜의 항목을 찾습니다',
@@ -906,7 +942,8 @@ const I18N = {
     pin: 'Pin to top', unpin: 'Unpin',
     pinned: n => `Pinned ${n}`, prev: 'Previous', next: 'Next',
     addedOn: s => `Added on ${s}`, goTo: s => `Go to ${s}`,
-    countTip: (n, done) => `${n} item${n > 1 ? 's' : ''} · ${done} done`,
+    countTip: (n, done) => `${n} item${n > 1 ? 's' : ''} · ${done} settled`,
+    carriedFrom: s => `Carried from ${s} · returns every 3 weekdays until you check it`,
     searchPlaceholder: 'Search all notes', close: 'Close (Esc)',
     hits: n => `${n} result${n === 1 ? '' : 's'}`,
     searchTitle: 'Search all notes', searchSub: 'Looks through every date',
@@ -1007,10 +1044,19 @@ const ICON = {
   pin:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.7l-1.8-.9a2 2 0 0 1-1.1-1.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>',
   pinOn: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 17v5" stroke-linecap="round"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.7l-1.8-.9a2 2 0 0 1-1.1-1.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>',
   jump:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>',
+  cross: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  carry: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
   ring:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="8"/></svg>',
   dot:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>',
   trash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
 };
+
+/* 항목 상태: 0 미확인 · 1 완료 · 2 드랍
+   미확인 항목만 평일 3일 간격으로 다음 날짜에 계속 나타난다.
+   load()가 이 값을 쓰므로 data 초기화보다 먼저 선언해야 한다. */
+const OPEN = 0, DONE = 1, DROPPED = 2;
+const REPEAT_BIZ_DAYS = 3;
+const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
 
 let data = load();
 let cur = key(new Date());
@@ -1031,6 +1077,17 @@ const COLORS = {
 };
 const colorOf = it => (it.color && COLORS[it.color]) ? COLORS[it.color] : null;
 
+const stateClass = s => s === DONE ? ' done' : s === DROPPED ? ' dropped' : '';
+const stateIcon = s => s === DROPPED ? ICON.cross : ICON.check;
+const srcLabel = k => { const d = parse(k); return L().md(d.getMonth() + 1, d.getDate()); };
+
+// 미확인 -> 완료 -> 드랍 -> 미확인
+function cycle(it) {
+  it.state = (it.state + 1) % 3;
+  save();
+  render();
+}
+
 function paintColor(row, it) {
   const hex = colorOf(it);
   if (!hex) return;
@@ -1042,7 +1099,50 @@ function paintColor(row, it) {
 }
 
 function load() {
-  try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; }
+  let raw;
+  try { raw = JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; }
+  // 예전 자료는 done 불리언을 쓴다 - 상태 값으로 옮긴다
+  for (const date of Object.keys(raw)) {
+    raw[date].forEach(it => {
+      if (it.state === undefined) it.state = it.done ? DONE : OPEN;
+      delete it.done;
+    });
+  }
+  return raw;
+}
+
+// a 다음날부터 b까지의 평일 수. b가 a보다 앞서면 음수를 돌려준다.
+function bizDist(aKey, bKey) {
+  const a = parse(aKey), b = parse(bKey);
+  const days = Math.round((b - a) / 86400000);
+  if (days <= 0) return days;
+  const start = new Date(a);
+  start.setDate(start.getDate() + 1);
+  let count = Math.floor(days / 7) * 5;
+  const rest = days % 7;
+  for (let i = 0; i < rest; i++) {
+    const w = (start.getDay() + i) % 7;
+    if (w !== 0 && w !== 6) count++;
+  }
+  return count;
+}
+
+// 해당 날짜에 보여줄 항목 - 그날 등록한 것 + 아직 확인하지 않아 넘어온 것
+function itemsFor(k) {
+  const own = (data[k] || []).map(it => ({ it, from: k, carried: false }));
+  if (isWeekend(parse(k))) return own;
+
+  const carried = [];
+  for (const date of Object.keys(data)) {
+    if (date === k) continue;
+    const dist = bizDist(date, k);
+    if (dist <= 0 || dist % REPEAT_BIZ_DAYS !== 0) continue;
+    data[date].forEach(it => {
+      if (it.state === OPEN) carried.push({ it, from: date, carried: true });
+    });
+  }
+  carried.sort((a, b) => a.from.localeCompare(b.from));
+  return own.concat(carried);
 }
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(data)); } catch {}
@@ -1064,7 +1164,6 @@ function firstOfMonth(k) {
   const d = parse(k);
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
-const items = k => data[k] || [];
 
 /* ─── 렌더링 ─── */
 // HTML에 박아둔 문구는 언어가 바뀔 때마다 다시 채운다.
@@ -1180,9 +1279,9 @@ function renderSearch() {
   hits.forEach(({ date, it }) => {
     const d = parse(date);
     const row = document.createElement('div');
-    row.className = 'sr-item' + (it.done ? ' done' : '');
+    row.className = 'sr-item' + stateClass(it.state);
     row.innerHTML = `
-      <span class="box">${ICON.check}</span>
+      <span class="box">${stateIcon(it.state)}</span>
       <span class="txt"></span>
       <span class="sr-date">${L().md(d.getMonth() + 1, d.getDate())}</span>`;
     row.querySelector('.txt').append(highlight(it.text, q));
@@ -1192,8 +1291,7 @@ function renderSearch() {
 
     row.querySelector('.box').onclick = e => {
       e.stopPropagation();
-      it.done = !it.done;
-      save(); render();
+      cycle(it);
     };
     row.onclick = () => { closeSearch(); goto(date); };
     results.appendChild(row);
@@ -1232,10 +1330,10 @@ function renderPinned() {
   pinList.innerHTML = '';
   pins.slice(pinPage * PIN_PER_PAGE, (pinPage + 1) * PIN_PER_PAGE).forEach(({ date, it }) => {
     const row = document.createElement('div');
-    row.className = 'pin-item tip-l' + (it.done ? ' done' : '');
+    row.className = 'pin-item tip-l' + stateClass(it.state);
     row.dataset.tip = L().addedOn(dateLabel(date));
     row.innerHTML = `
-      <span class="box">${ICON.check}</span>
+      <span class="box">${stateIcon(it.state)}</span>
       <span class="txt"></span>
       <span class="pin-act">
         <button class="go">${ICON.jump}</button>
@@ -1258,7 +1356,7 @@ function renderPinned() {
       save(); render();
     };
 
-    row.onclick = () => { it.done = !it.done; save(); render(); };
+    row.onclick = () => cycle(it);
     pinList.appendChild(row);
   });
 }
@@ -1272,17 +1370,17 @@ function renderHeader() {
 
   todayBtn.disabled = cur === key(new Date());
 
-  const arr = items(cur);
-  const done = arr.filter(i => i.done).length;
+  const arr = itemsFor(cur);
+  const settled = arr.filter(e => e.it.state !== OPEN).length;
   progress.hidden = !arr.length;
   if (arr.length) {
-    progFill.style.width = `${(done / arr.length) * 100}%`;
-    progText.textContent = `${done}/${arr.length}`;
+    progFill.style.width = `${(settled / arr.length) * 100}%`;
+    progText.textContent = `${settled}/${arr.length}`;
   }
 }
 
 function renderList() {
-  const arr = items(cur);
+  const arr = itemsFor(cur);
   list.innerHTML = '';
 
   if (!arr.length) {
@@ -1300,14 +1398,16 @@ function renderList() {
     return;
   }
 
-  arr.forEach((it, i) => {
+  arr.forEach(({ it, from, carried }, i) => {
     const row = document.createElement('div');
     const hex = colorOf(it);
-    row.className = 'item' + (it.done ? ' done' : '') + (it.pinnedAt ? ' pinned' : '');
+    row.className = 'item' + stateClass(it.state)
+      + (it.pinnedAt ? ' pinned' : '') + (carried ? ' carried' : '');
     row.innerHTML = `
-      <span class="grip" title="${L().dragTip}">${ICON.grip}</span>
-      <span class="box">${ICON.check}</span>
+      ${carried ? '' : `<span class="grip" title="${L().dragTip}">${ICON.grip}</span>`}
+      <span class="box">${stateIcon(it.state)}</span>
       <span class="txt"></span>
+      ${carried ? `<span class="carry">${ICON.carry}${srcLabel(from)}</span>` : ''}
       <span class="row-act">
         <button class="clr tip-r">${hex ? ICON.dot : ICON.ring}</button>
         <button class="pin tip-r">${it.pinnedAt ? ICON.pinOn : ICON.pin}</button>
@@ -1316,6 +1416,11 @@ function renderList() {
       </span>`;
     row.querySelector('.txt').textContent = it.text;
     paintColor(row, it);
+    if (carried) {
+      const chip = row.querySelector('.carry');
+      chip.dataset.tip = L().carriedFrom(dateLabel(from));
+      chip.classList.add('tip-r');
+    }
 
     const clrBtn = row.querySelector('.clr');
     clrBtn.dataset.tip = hex ? L().colorIs(L().colors[it.color]) : L().setColor;
@@ -1324,8 +1429,7 @@ function renderList() {
 
     row.onclick = () => {
       if (justDragged) return;
-      it.done = !it.done;
-      save(); render();
+      cycle(it);
     };
 
     const pinBtn = row.querySelector('.pin');
@@ -1342,12 +1446,13 @@ function renderList() {
     const rmBtn = row.querySelector('.rm');
     if (rmBtn) rmBtn.onclick = e => {
       e.stopPropagation();
-      data[cur] = arr.filter(x => x !== it);
-      if (!data[cur].length) delete data[cur];
+      data[from] = data[from].filter(x => x !== it);
+      if (!data[from].length) delete data[from];
       save(); render();
     };
 
-    row.onpointerdown = e => {
+    // 넘어온 항목은 원래 날짜의 순서를 따르므로 여기서 끌어 옮기지 않는다
+    if (!carried) row.onpointerdown = e => {
       if (e.button !== 0) return;
       if (e.target.closest('button, input')) return;
       if (row.querySelector('.edit')) return;
@@ -1369,7 +1474,8 @@ function renderList() {
 function updateDropTarget(y) {
   clearDropMarks();
   dropTo = null;
-  const rows = [...list.querySelectorAll('.item')];
+  // 넘어온 항목은 순서 대상이 아니라 제외한다 - 남은 행의 위치가 data[cur] 순서와 같다
+  const rows = [...list.querySelectorAll('.item:not(.carried)')];
   if (!rows.length) return;
 
   const inPlace = to => to === drag.idx || to === drag.idx + 1;
@@ -1535,7 +1641,7 @@ function renderCal() {
 
   for (let d = 1; d <= last; d++) {
     const k = key(new Date(y, m, d));
-    const arr = items(k);
+    const arr = itemsFor(k).map(e => e.it);
     const col = (start + d - 1) % 7;
     const holiday = HOLIDAYS[k];
 
@@ -1550,14 +1656,14 @@ function renderCal() {
 
     if (arr.length) {
       const b = document.createElement('span');
-      b.className = 'cnt' + (arr.every(x => x.done) ? ' all-done' : '');
+      b.className = 'cnt' + (arr.every(x => x.state !== OPEN) ? ' all-done' : '');
       b.textContent = arr.length;
       cell.appendChild(b);
     }
 
     const tip = [
       holiday ? holidayName(holiday) : null,
-      arr.length ? L().countTip(arr.length, arr.filter(x => x.done).length) : null,
+      arr.length ? L().countTip(arr.length, arr.filter(x => x.state !== OPEN).length) : null,
     ].filter(Boolean).join('  ·  ');
     if (tip) cell.dataset.tip = tip;
 
@@ -1570,7 +1676,7 @@ function renderCal() {
 function addItem() {
   const v = input.value.trim();
   if (!v) return;
-  (data[cur] ||= []).push({ text: v, done: false });
+  (data[cur] ||= []).push({ text: v, state: OPEN });
   input.value = '';
   add.disabled = true;
   save();

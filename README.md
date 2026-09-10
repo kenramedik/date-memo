@@ -6,7 +6,9 @@ Each day gets its own list. Move between days with the arrows, the calendar, or 
 
 ## Features
 
-- **Day-by-day lists** — every date holds its own items; jump around with the arrows, the `오늘` (Today) button, or the calendar
+- **Day-by-day lists** — every date holds its own items; jump around with the arrows, the Today button, or the calendar
+- **Three-state checking** — click once to mark an item done, twice to mark it dropped, three times to clear it
+- **Carries forward until you deal with it** — an unchecked item reappears three weekdays later, and keeps coming back until you mark it done or dropped. Weekends are skipped, so a Wednesday item returns the following Monday
 - **Calendar** — shows how many items each day holds, and marks South Korean public holidays (2025–2030) with a red tint and a tooltip naming the holiday
 - **Pinning** — keep important items at the top regardless of the date. Paged three at a time, scrollable with the mouse wheel, with a button that jumps to the item's original date
 - **Search** — `Ctrl+F` searches every date at once. Matches are highlighted, and clicking a result jumps to that day
