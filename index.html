@@ -117,6 +117,12 @@ svg { display: block; flex: none; }
 }
 .mi-sep { height: 1px; margin: 4px 8px; background: var(--border); }
 
+/* 항목 우클릭 메뉴 - 체크 표시가 없어 왼쪽 여백을 줄인다 */
+.menupop.ctx { min-width: 168px; }
+.menupop.ctx .mi { padding-left: 12px; }
+.menupop.ctx .mi.danger { color: var(--red); }
+.menupop.ctx .mi.danger:hover { background: rgba(184, 86, 77, .12); }
+
 /* ─────────── 헤더 ─────────── */
 header { padding: 16px 20px 0; flex: none; }
 
@@ -629,20 +635,7 @@ body.dragging-active * { cursor: grabbing !important; }
 .item.carried { border-style: dashed; box-shadow: none; }
 .item.carried:hover { box-shadow: var(--shadow-sm); }
 
-.row-act { display: flex; gap: 1px; }
-.row-act > * { opacity: 0; transition: opacity .13s; }
-.item:hover .row-act > *, .item:focus-within .row-act > * { opacity: 1; }
-.row-act button {
-  width: 26px; height: 26px;
-  display: grid; place-items: center;
-  border-radius: 7px;
-  color: var(--text-3);
-  transition: background .12s, color .12s;
-}
-.row-act button:hover { background: var(--surface-hover); color: var(--text); }
-.row-act .rm:hover { background: rgba(184, 86, 77, .12); color: var(--red); }
-.item.pinned .pin { opacity: 1; color: var(--accent); }
-.item[data-color] .clr { opacity: 1; }
+.pin-mark { flex: none; display: grid; place-items: center; color: var(--accent); }
 
 /* 항목 색상 */
 .bar {
@@ -881,6 +874,7 @@ footer {
 </div>
 
 <div class="menupop" id="menu-pop" hidden></div>
+<div class="menupop ctx" id="ctx-pop" hidden></div>
 <div class="colorpop" id="color-pop" hidden></div>
 
 <script>
@@ -1405,12 +1399,7 @@ function renderList() {
       <span class="box">${stateIcon(it.state)}</span>
       <span class="txt"></span>
       ${carried ? `<span class="carry">${ICON.carry}${srcLabel(from)}</span>` : ''}
-      <span class="row-act">
-        <button class="clr tip-r">${hex ? ICON.dot : ICON.ring}</button>
-        <button class="pin tip-r">${it.pinnedAt ? ICON.pinOn : ICON.pin}</button>
-        <button class="ed tip-r" title="${L().edit}">${ICON.pen}</button>
-        ${menuState.deleteLock ? '' : `<button class="rm tip-r" data-tip="${L().del}">${ICON.trash}</button>`}
-      </span>`;
+      ${it.pinnedAt ? `<span class="pin-mark" title="${L().pin}">${ICON.pinOn}</span>` : ''}`;
     row.querySelector('.txt').textContent = it.text;
     paintColor(row, it);
     if (carried) {
@@ -1419,33 +1408,40 @@ function renderList() {
       chip.classList.add('tip-r');
     }
 
-    const clrBtn = row.querySelector('.clr');
-    clrBtn.dataset.tip = hex ? L().colorIs(L().colors[it.color]) : L().setColor;
-    if (hex) clrBtn.style.color = hex;
-    clrBtn.onclick = e => { e.stopPropagation(); openColorPop(clrBtn, it); };
-
     row.onclick = () => {
       if (justDragged) return;
       cycle(it);
     };
 
-    const pinBtn = row.querySelector('.pin');
-    pinBtn.dataset.tip = it.pinnedAt ? L().unpin : L().pin;
-    pinBtn.onclick = e => {
-      e.stopPropagation();
-      if (it.pinnedAt) delete it.pinnedAt;
-      else it.pinnedAt = Date.now();
-      save(); render();
-    };
-
-    row.querySelector('.ed').onclick = e => { e.stopPropagation(); startEdit(row, it); };
-
-    const rmBtn = row.querySelector('.rm');
-    if (rmBtn) rmBtn.onclick = e => {
-      e.stopPropagation();
-      data[from] = data[from].filter(x => x !== it);
-      if (!data[from].length) delete data[from];
-      save(); render();
+    row.oncontextmenu = e => {
+      e.preventDefault();
+      const entries = [
+        { label: L().edit, run: () => startEdit(row, it) },
+        {
+          label: it.pinnedAt ? L().unpin : L().pin,
+          run: () => {
+            if (it.pinnedAt) delete it.pinnedAt;
+            else it.pinnedAt = Date.now();
+            save(); render();
+          },
+        },
+        {
+          label: hex ? L().colorIs(L().colors[it.color]) : L().setColor,
+          run: () => openColorPop({ left: e.clientX, right: e.clientX, top: e.clientY, bottom: e.clientY }, it),
+        },
+      ];
+      if (!menuState.deleteLock) {
+        entries.push({ sep: true }, {
+          label: L().del,
+          danger: true,
+          run: () => {
+            data[from] = data[from].filter(x => x !== it);
+            if (!data[from].length) delete data[from];
+            save(); render();
+          },
+        });
+      }
+      openCtxMenu(e.clientX, e.clientY, entries);
     };
 
     // 넘어온 항목은 원래 날짜의 순서를 따르므로 여기서 끌어 옮기지 않는다
@@ -1556,10 +1552,42 @@ function moveItem(from, to) {
   render();
 }
 
+/* ─── 항목 우클릭 메뉴 ─── */
+const ctxPop = document.getElementById('ctx-pop');
+
+function openCtxMenu(x, y, entries) {
+  closeColorPop();
+  ctxPop.innerHTML = '';
+  entries.forEach(spec => {
+    if (spec.sep) {
+      const s = document.createElement('div');
+      s.className = 'mi-sep';
+      ctxPop.appendChild(s);
+      return;
+    }
+    const mi = document.createElement('button');
+    mi.className = 'mi' + (spec.danger ? ' danger' : '');
+    mi.textContent = spec.label;
+    mi.onclick = ev => {
+      ev.stopPropagation();
+      closeCtxMenu();
+      spec.run();
+    };
+    ctxPop.appendChild(mi);
+  });
+
+  ctxPop.hidden = false;
+  const w = ctxPop.offsetWidth, h = ctxPop.offsetHeight;
+  ctxPop.style.left = `${Math.max(6, Math.min(x, innerWidth - w - 6))}px`;
+  ctxPop.style.top = `${y + h > innerHeight ? Math.max(6, y - h) : y}px`;
+}
+
+function closeCtxMenu() { ctxPop.hidden = true; }
+
 /* ─── 색상 선택 ─── */
 const colorPop = document.getElementById('color-pop');
 
-function openColorPop(btn, it) {
+function openColorPop(anchor, it) {
   colorPop.innerHTML = '';
   const add = (key, hex, name) => {
     const b = document.createElement('button');
@@ -1579,10 +1607,11 @@ function openColorPop(btn, it) {
   Object.entries(COLORS).forEach(([k, hex]) => add(k, hex, L().colors[k]));
 
   colorPop.hidden = false;
-  const r = btn.getBoundingClientRect();
+  const r = typeof anchor.getBoundingClientRect === 'function'
+    ? anchor.getBoundingClientRect() : anchor;
   const w = colorPop.offsetWidth, h = colorPop.offsetHeight;
-  colorPop.style.left = `${Math.max(8, Math.min(r.right - w, innerWidth - w - 8))}px`;
-  colorPop.style.top = `${r.bottom + 6 + h > innerHeight ? r.top - h - 6 : r.bottom + 6}px`;
+  colorPop.style.left = `${Math.max(8, Math.min(r.left, innerWidth - w - 8))}px`;
+  colorPop.style.top = `${r.bottom + 6 + h > innerHeight ? Math.max(8, r.top - h - 6) : r.bottom + 6}px`;
 }
 
 function closeColorPop() { colorPop.hidden = true; }
@@ -1778,6 +1807,7 @@ searchInput.oninput = renderSearch;
 document.onkeydown = e => {
   if (e.key === 'Escape') {
     if (!colorPop.hidden) closeColorPop();
+    else if (!ctxPop.hidden) closeCtxMenu();
     else if (menuOpen) closeMenu();
     else if (searchOpen) closeSearch();
     else if (!calendar.hidden) toggleCal();
@@ -1879,8 +1909,9 @@ menuBar.querySelectorAll('.mb-item').forEach(btn => {
 addEventListener('mousedown', e => {
   if (menuOpen && !menuPop.contains(e.target) && !menuBar.contains(e.target)) closeMenu();
   if (!colorPop.hidden && !colorPop.contains(e.target)) closeColorPop();
+  if (!ctxPop.hidden && !ctxPop.contains(e.target)) closeCtxMenu();
 });
-addEventListener('blur', () => { closeMenu(); closeColorPop(); });
+addEventListener('blur', () => { closeMenu(); closeColorPop(); closeCtxMenu(); });
 
 if (window.appMenu) {
   menuBar.hidden = false;
