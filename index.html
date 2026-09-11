@@ -26,6 +26,7 @@
   --accent-hover:  #155e75;
   --accent-soft:   #e6f4f8;
   --accent-line:   #cbe2ea;
+  --today-wash:    rgba(14, 116, 144, .07);
   --accent-wash:   rgba(14, 116, 144, .12);
   --accent-ring:   rgba(14, 116, 144, .18);
   --red:           #b8564d;
@@ -125,6 +126,10 @@ svg { display: block; flex: none; }
 
 /* ─────────── 헤더 ─────────── */
 header { padding: 16px 20px 0; flex: none; }
+
+/* 오늘을 보는 중일 때만 상단을 옅게 물들인다.
+   아래로 갈수록 투명해져 경계선처럼 보이지 않는다. */
+#app.today-view header { background: linear-gradient(var(--today-wash), transparent); }
 
 .hrow {
   display: flex;
@@ -289,7 +294,11 @@ header { padding: 16px 20px 0; flex: none; }
 .cal-cell.sun { color: var(--red); }
 .cal-cell.holiday { color: var(--red); background: var(--holiday); }
 .cal-cell.holiday:hover { background: var(--holiday-hover); border-color: transparent; }
-.cal-cell.today { font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--accent); }
+.cal-cell.today {
+  font-weight: 700;
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
 .cal-cell.sel {
   background: var(--accent);
   color: #fff;
@@ -1357,6 +1366,7 @@ function renderHeader() {
     `${L().dayNum(d.getDate())}<span class="dow ${w === 0 ? 'sun' : w === 6 ? 'sat' : ''}">${L().dowLong[w]}</span>`;
 
   todayBtn.disabled = cur === today;
+  document.getElementById('app').classList.toggle('today-view', cur === today);
 
   const arr = itemsFor(cur);
   const settled = arr.filter(e => e.it.state !== OPEN).length;
