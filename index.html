@@ -298,34 +298,24 @@ header { padding: 16px 20px 0; flex: none; }
 }
 .cal-cell.sel:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
-/* 공용 툴팁 */
-[data-tip] { position: relative; }
-[data-tip]::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%) translateY(3px);
+/* 공용 툴팁 - 하나를 띄워 옮겨 쓴다.
+   가짜 요소로 만들면 스크롤 영역에 잘리고, 네이티브 title 은 OS가 0.5초쯤 늦게 띄운다. */
+#tip {
+  position: fixed;
+  z-index: 200;
+  max-width: 300px;
   padding: 5px 9px;
   border-radius: 7px;
   background: var(--tip-bg);
   color: var(--tip-fg);
   font-size: 10.5px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
   letter-spacing: .01em;
-  white-space: nowrap;
   box-shadow: var(--shadow-md);
-  opacity: 0;
   pointer-events: none;
-  transition: opacity .13s ease, transform .13s ease;
-  z-index: 20;
 }
-[data-tip].tip-l::after { left: 0; transform: translateX(0) translateY(3px); }
-[data-tip].tip-r::after { left: auto; right: 0; transform: translateX(0) translateY(3px); }
-[data-tip]:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
-[data-tip].tip-l:hover::after,
-[data-tip].tip-r:hover::after { transform: translateX(0) translateY(0); }
+#tip[hidden] { display: none; }
 
 .cnt {
   min-width: 15px;
@@ -631,7 +621,10 @@ body.dragging-active * { cursor: grabbing !important; }
   font-weight: 600;
   color: var(--text-3);
   white-space: nowrap;
+  cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s;
 }
+.carry:hover { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
 .item.carried { border-style: dashed; box-shadow: none; }
 .item.carried:hover { box-shadow: var(--shadow-sm); }
 
@@ -775,7 +768,7 @@ footer {
 
   <header>
     <div class="hrow">
-      <button class="month-btn" id="monthBtn" title="달력 열기">
+      <button class="month-btn" id="monthBtn">
         <span id="ymLabel"></span>
         <svg class="chev" width="11" height="11" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -787,16 +780,16 @@ footer {
     <div class="hrow">
       <h1 class="day-title" id="dayTitle"></h1>
       <div class="actions">
-        <button class="icon-btn" id="searchBtn" title="검색 (Ctrl+F)">
+        <button class="icon-btn" id="searchBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/></svg>
         </button>
         <button class="chip" id="todayBtn">오늘</button>
-        <button class="icon-btn" id="prev" title="이전 날 (←)">
+        <button class="icon-btn" id="prev">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <button class="icon-btn" id="next" title="다음 날 (→)">
+        <button class="icon-btn" id="next">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
@@ -811,17 +804,17 @@ footer {
 
   <div id="calendar" hidden>
     <div class="cal-head">
-      <button class="cal-nav" id="calPrev" title="이전 달">
+      <button class="cal-nav" id="calPrev">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
       <b id="calLabel"></b>
       <span class="cal-right">
-        <button class="cal-nav" id="calNext" title="다음 달">
+        <button class="cal-nav" id="calNext">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
-        <button class="cal-nav" id="calClose" title="달력 접기 (Esc)">
+        <button class="cal-nav" id="calClose">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
@@ -835,7 +828,7 @@ footer {
          stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/></svg>
     <input id="search-input" type="text" placeholder="전체 메모에서 검색" autocomplete="off" spellcheck="false">
     <span class="sr-count" id="search-count"></span>
-    <button id="search-close" title="닫기 (Esc)">
+    <button id="search-close">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
@@ -845,12 +838,12 @@ footer {
     <div class="pin-head">
       <span class="pin-title" id="pinTitle">고정됨</span>
       <span class="pin-pager" id="pinPager" hidden>
-        <button id="pinPrev" title="이전">
+        <button id="pinPrev">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <span class="pin-page" id="pinPageLabel"></span>
-        <button id="pinNext" title="다음">
+        <button id="pinNext">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
@@ -865,7 +858,7 @@ footer {
   <footer>
     <div class="field">
       <input id="input" type="text" placeholder="할 일을 입력하세요" autocomplete="off" spellcheck="false">
-      <button class="submit" id="add" disabled title="추가 (Enter)">
+      <button class="submit" id="add" disabled>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
       </button>
@@ -874,6 +867,7 @@ footer {
 </div>
 
 <div class="menupop" id="menu-pop" hidden></div>
+<div id="tip" hidden></div>
 <div class="menupop ctx" id="ctx-pop" hidden></div>
 <div class="colorpop" id="color-pop" hidden></div>
 
@@ -905,7 +899,7 @@ const I18N = {
     pinned: n => `고정됨 ${n}`, prev: '이전', next: '다음',
     addedOn: s => `${s}에 추가됨`, goTo: s => `${s}로 이동`,
     countTip: (n, done) => `메모 ${n}개 · 처리 ${done}개`,
-    carriedFrom: s => `${s}에서 넘어옴 · 확인할 때까지 평일마다 계속 나타납니다`,
+    carriedFrom: s => `${s}에서 넘어옴 · 눌러서 그 날짜로 이동`,
     searchPlaceholder: '전체 메모에서 검색', close: '닫기 (Esc)',
     hits: n => `${n}건`,
     searchTitle: '전체 메모에서 검색', searchSub: '모든 날짜의 항목을 찾습니다',
@@ -937,7 +931,7 @@ const I18N = {
     pinned: n => `Pinned ${n}`, prev: 'Previous', next: 'Next',
     addedOn: s => `Added on ${s}`, goTo: s => `Go to ${s}`,
     countTip: (n, done) => `${n} item${n > 1 ? 's' : ''} · ${done} settled`,
-    carriedFrom: s => `Carried from ${s} · stays on every weekday until you check it`,
+    carriedFrom: s => `Carried from ${s} · click to open that date`,
     searchPlaceholder: 'Search all notes', close: 'Close (Esc)',
     hits: n => `${n} result${n === 1 ? '' : 's'}`,
     searchTitle: 'Search all notes', searchSub: 'Looks through every date',
@@ -1160,24 +1154,25 @@ function firstOfMonth(k) {
 // HTML에 박아둔 문구는 언어가 바뀔 때마다 다시 채운다.
 function applyStaticText() {
   const set = (id, attr, val) => document.getElementById(id).setAttribute(attr, val);
+  const tip = (id, val) => { document.getElementById(id).dataset.tip = val; };
   const bar = document.getElementById('menu-bar');
   bar.querySelector('[data-menu="file"]').textContent = L().menuFile;
   bar.querySelector('[data-menu="settings"]').textContent = L().menuSettings;
   bar.querySelector('[data-menu="help"]').textContent = L().menuHelp;
 
-  set('monthBtn', 'title', L().openCalendar);
-  set('searchBtn', 'title', L().searchTip);
-  set('prev', 'title', L().prevDay);
-  set('next', 'title', L().nextDay);
-  set('calPrev', 'title', L().prevMonth);
-  set('calNext', 'title', L().nextMonth);
-  set('calClose', 'title', L().closeCalendar);
-  set('pinPrev', 'title', L().prev);
-  set('pinNext', 'title', L().next);
+  tip('monthBtn', L().openCalendar);
+  tip('searchBtn', L().searchTip);
+  tip('prev', L().prevDay);
+  tip('next', L().nextDay);
+  tip('calPrev', L().prevMonth);
+  tip('calNext', L().nextMonth);
+  tip('calClose', L().closeCalendar);
+  tip('pinPrev', L().prev);
+  tip('pinNext', L().next);
+  tip('search-close', L().close);
+  tip('add', L().addTip);
   set('search-input', 'placeholder', L().searchPlaceholder);
-  set('search-close', 'title', L().close);
   set('input', 'placeholder', L().addPlaceholder);
-  set('add', 'title', L().addTip);
   todayBtn.textContent = L().today;
 }
 
@@ -1278,7 +1273,6 @@ function renderSearch() {
     row.querySelector('.txt').append(highlight(it.text, q));
     paintColor(row, it);
     row.dataset.tip = `${dateLabel(date)} · ${L().clickToOpen}`;
-    row.classList.add('tip-l');
 
     row.querySelector('.box').onclick = e => {
       e.stopPropagation();
@@ -1321,7 +1315,7 @@ function renderPinned() {
   pinList.innerHTML = '';
   pins.slice(pinPage * PIN_PER_PAGE, (pinPage + 1) * PIN_PER_PAGE).forEach(({ date, it }) => {
     const row = document.createElement('div');
-    row.className = 'pin-item tip-l' + stateClass(it.state);
+    row.className = 'pin-item' + stateClass(it.state);
     row.dataset.tip = L().addedOn(dateLabel(date));
     row.innerHTML = `
       <span class="box">${stateIcon(it.state)}</span>
@@ -1335,12 +1329,10 @@ function renderPinned() {
 
     const go = row.querySelector('.go');
     go.dataset.tip = L().goTo(dateLabel(date));
-    go.classList.add('tip-r');
     go.onclick = e => { e.stopPropagation(); goto(date); };
 
     const off = row.querySelector('.off');
     off.dataset.tip = L().unpin;
-    off.classList.add('tip-r');
     off.onclick = e => {
       e.stopPropagation();
       delete it.pinnedAt;
@@ -1395,17 +1387,18 @@ function renderList() {
     row.className = 'item' + stateClass(it.state)
       + (it.pinnedAt ? ' pinned' : '') + (carried ? ' carried' : '');
     row.innerHTML = `
-      ${carried ? '' : `<span class="grip" title="${L().dragTip}">${ICON.grip}</span>`}
+      ${carried ? '' : `<span class="grip" data-tip="${L().dragTip}">${ICON.grip}</span>`}
       <span class="box">${stateIcon(it.state)}</span>
       <span class="txt"></span>
-      ${carried ? `<span class="carry">${ICON.carry}${srcLabel(from)}</span>` : ''}
-      ${it.pinnedAt ? `<span class="pin-mark" title="${L().pin}">${ICON.pinOn}</span>` : ''}`;
+      ${carried ? `<button class="carry">${ICON.carry}${srcLabel(from)}</button>` : ''}
+      ${it.pinnedAt ? `<span class="pin-mark" data-tip="${L().unpin}">${ICON.pinOn}</span>` : ''}`;
     row.querySelector('.txt').textContent = it.text;
     paintColor(row, it);
     if (carried) {
       const chip = row.querySelector('.carry');
       chip.dataset.tip = L().carriedFrom(dateLabel(from));
-      chip.classList.add('tip-r');
+      // 행으로 전달되면 완료 처리가 돼 항목이 사라진다
+      chip.onclick = e => { e.stopPropagation(); goto(from); };
     }
 
     row.onclick = () => {
@@ -1457,7 +1450,7 @@ function renderList() {
 
   // 말줄임된 항목만 전체 내용을 툴팁으로 보여준다
   list.querySelectorAll('.txt').forEach(el => {
-    if (el.scrollWidth > el.clientWidth + 1) el.title = el.textContent;
+    if (el.scrollWidth > el.clientWidth + 1) el.dataset.tip = el.textContent;
   });
 }
 
@@ -1552,6 +1545,33 @@ function moveItem(from, to) {
   render();
 }
 
+/* ─── 툴팁 ─── */
+const tipEl = document.getElementById('tip');
+let tipFor = null;
+
+function showTip(el) {
+  tipEl.textContent = el.dataset.tip;
+  tipEl.hidden = false;
+  const r = el.getBoundingClientRect();
+  const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  const left = Math.max(6, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 6));
+  const above = r.top - h - 6;
+  tipEl.style.left = `${left}px`;
+  tipEl.style.top = `${above < 6 ? r.bottom + 6 : above}px`;
+}
+
+function hideTip() { tipEl.hidden = true; tipFor = null; }
+
+addEventListener('mouseover', e => {
+  const el = e.target.closest && e.target.closest('[data-tip]');
+  if (el === tipFor) return;
+  tipFor = el;
+  el ? showTip(el) : hideTip();
+});
+addEventListener('mousedown', hideTip);
+addEventListener('wheel', hideTip, { passive: true });
+addEventListener('blur', hideTip);
+
 /* ─── 항목 우클릭 메뉴 ─── */
 const ctxPop = document.getElementById('ctx-pop');
 
@@ -1593,7 +1613,7 @@ function openColorPop(anchor, it) {
     const b = document.createElement('button');
     b.className = 'sw' + (key ? '' : ' none') + ((it.color || '') === key ? ' on' : '');
     if (hex) b.style.setProperty('--c', hex);
-    b.title = name;
+    b.dataset.tip = name;
     b.onclick = e => {
       e.stopPropagation();
       if (key) it.color = key; else delete it.color;
@@ -1676,7 +1696,7 @@ function renderCal() {
       + (holiday ? ' holiday' : '')
       + (k === today ? ' today' : '')
       + (k === cur ? ' sel' : '')
-      + (col <= 1 ? ' tip-l' : col >= 5 ? ' tip-r' : '');
+      + (col <= 1 ? '' : col >= 5 ? '' : '');
     cell.innerHTML = `<span>${d}</span>`;
 
     if (arr.length) {
