@@ -6,7 +6,7 @@ const AUTHOR = 'goni';
 
 const T = {
   ko: {
-    appTitle: '날짜별 메모',
+    appTitle: '간단한 할일 메모',
     open: '열기',
     alwaysOnTop: '항상 위에 표시',
     exit: '종료',
@@ -16,7 +16,7 @@ const T = {
     ok: '확인',
   },
   en: {
-    appTitle: 'DateMemo',
+    appTitle: 'Simple To-Do Memo',
     open: 'Open',
     alwaysOnTop: 'Always on Top',
     exit: 'Exit',
@@ -137,11 +137,30 @@ function showAbout() {
   });
 }
 
+// 앱 이름이 DateMemo 에서 바뀌면서 userData 경로도 바뀌었다.
+// 창을 만들기 전에 예전 폴더를 옮겨와야 기존 메모가 그대로 보인다.
+function migrateUserData() {
+  const oldDir = path.join(app.getPath('appData'), 'DateMemo');
+  const newDir = app.getPath('userData');
+  if (oldDir === newDir) return;
+  if (fs.existsSync(path.join(newDir, 'settings.json'))) return;
+  if (!fs.existsSync(path.join(oldDir, 'settings.json'))) return;
+  try {
+    fs.mkdirSync(newDir, { recursive: true });
+    for (const entry of fs.readdirSync(oldDir)) {
+      fs.cpSync(path.join(oldDir, entry), path.join(newDir, entry), { recursive: true });
+    }
+  } catch (e) {
+    // 옮기지 못해도 예전 폴더는 그대로 남으므로 손으로 복구할 수 있다
+    console.error('userData 이전 실패:', e);
+  }
+}
+
 // 최초 실행 - 어느 언어인지 모르니 양쪽 언어로 묻는다.
 function askLanguage() {
   const i = dialog.showMessageBoxSync({
     type: 'question',
-    title: 'DateMemo',
+    title: 'Simple To-Do Memo',
     message: '언어를 선택하세요 / Choose a language',
     buttons: ['한국어', 'English'],
     defaultId: 0,
@@ -205,6 +224,7 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     nativeTheme.themeSource = 'light';
     Menu.setApplicationMenu(null);
+    migrateUserData();
     loadSettings();
     if (settings.lang !== 'ko' && settings.lang !== 'en') askLanguage();
     createWindow();

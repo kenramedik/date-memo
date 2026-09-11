@@ -1,4 +1,4 @@
-# DateMemo
+# Simple To-Do Memo
 
 A Windows desktop app for keeping a to-do list one day at a time.
 
@@ -24,10 +24,12 @@ Holiday data covers South Korean public holidays only.
 
 Grab a build from [Releases](../../releases).
 
-- `DateMemo-Setup-x.y.z.exe` — installer. Runs without administrator rights and creates desktop and Start menu shortcuts
-- `DateMemo-x.y.z-win.zip` — portable. Unpack anywhere and run `DateMemo.exe`
+- `SimpleToDoMemo-Setup-x.y.z.exe` — installer. Runs without administrator rights and creates desktop and Start menu shortcuts
+- `SimpleToDoMemo-x.y.z-win.zip` — portable. Unpack anywhere and run `SimpleToDoMemo.exe`
 
 The executable is unsigned, so SmartScreen may warn on first launch (`More info` → `Run anyway`).
+
+Upgrading from a version named DateMemo carries your existing notes over automatically on first launch.
 
 ## Development
 
@@ -38,7 +40,7 @@ npm run icon     # regenerate the icons in assets/
 npm run dist     # build the installer and the zip
 ```
 
-Data lives in `%APPDATA%\DateMemo`.
+Data lives in `%APPDATA%\SimpleToDoMemo`.
 
 ## Built with
 
