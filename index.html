@@ -26,7 +26,8 @@
   --accent-hover:  #155e75;
   --accent-soft:   #e6f4f8;
   --accent-line:   #cbe2ea;
-  --today-wash:    rgba(14, 116, 144, .07);
+  --today-bg:      #e4eef2;
+  --today-wash:    rgba(14, 116, 144, .13);
   --accent-wash:   rgba(14, 116, 144, .12);
   --accent-ring:   rgba(14, 116, 144, .18);
   --red:           #b8564d;
@@ -127,9 +128,11 @@ svg { display: block; flex: none; }
 /* ─────────── 헤더 ─────────── */
 header { padding: 16px 20px 0; flex: none; }
 
-/* 오늘을 보는 중일 때만 상단을 옅게 물들인다.
-   아래로 갈수록 투명해져 경계선처럼 보이지 않는다. */
+/* 오늘을 보는 중일 때 화면 전체를 살짝 물들이고, 상단은 한 번 더 진하게 얹는다.
+   그라데이션이 아래로 투명해져서 경계선처럼 끊기지 않는다. */
+#app.today-view { background: var(--today-bg); }
 #app.today-view header { background: linear-gradient(var(--today-wash), transparent); }
+#app.today-view footer { background: transparent; }
 
 .hrow {
   display: flex;
