@@ -1072,8 +1072,11 @@ const stateIcon = s => s === DROPPED ? ICON.cross : ICON.check;
 const srcLabel = k => { const d = parse(k); return L().md(d.getMonth() + 1, d.getDate()); };
 
 // 미확인 -> 완료 -> 드랍 -> 미확인
+// 어느 날짜에서 처리했는지 남겨야 그날 목록에서 사라지지 않는다
 function cycle(it) {
   it.state = (it.state + 1) % 3;
+  if (it.state === OPEN) delete it.settledOn;
+  else it.settledOn = cur;
   save();
   render();
 }
@@ -1123,7 +1126,9 @@ function itemsFor(k) {
   for (const date of Object.keys(data)) {
     if (date >= k) continue;
     data[date].forEach(it => {
-      if (it.state === OPEN) carried.push({ it, from: date, carried: true });
+      // 미확인이면 계속 따라오고, 처리한 항목은 처리한 날짜까지만 남는다
+      const live = it.state === OPEN ? true : (it.settledOn && k <= it.settledOn);
+      if (live) carried.push({ it, from: date, carried: true });
     });
   }
   carried.sort((a, b) => a.from.localeCompare(b.from));
