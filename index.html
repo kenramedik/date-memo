@@ -1059,7 +1059,8 @@ const REPEAT_BIZ_DAYS = 3;
 const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
 
 let data = load();
-let cur = key(new Date());
+let today = key(new Date());
+let cur = today;
 let calMonth = firstOfMonth(cur);
 let drag = null;
 let dropTo = null;
@@ -1368,7 +1369,7 @@ function renderHeader() {
   dayTitle.innerHTML =
     `${L().dayNum(d.getDate())}<span class="dow ${w === 0 ? 'sun' : w === 6 ? 'sat' : ''}">${L().dowLong[w]}</span>`;
 
-  todayBtn.disabled = cur === key(new Date());
+  todayBtn.disabled = cur === today;
 
   const arr = itemsFor(cur);
   const settled = arr.filter(e => e.it.state !== OPEN).length;
@@ -1631,7 +1632,6 @@ function renderCal() {
 
   const start = new Date(y, m, 1).getDay();
   const last = new Date(y, m + 1, 0).getDate();
-  const today = key(new Date());
 
   for (let i = 0; i < start; i++) {
     const c = document.createElement('div');
@@ -1699,7 +1699,7 @@ function toggleCal() {
 monthBtn.onclick = toggleCal;
 prev.onclick = () => goto(shiftDay(cur, -1));
 next.onclick = () => goto(shiftDay(cur, 1));
-todayBtn.onclick = () => goto(key(new Date()));
+todayBtn.onclick = () => { checkDateRollover(); goto(today); };
 calPrev.onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCal(); };
 calNext.onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCal(); };
 calClose.onclick = toggleCal;
@@ -1725,6 +1725,33 @@ add.onclick = addItem;
 input.oninput = () => { add.disabled = !input.value.trim(); };
 input.onkeydown = e => { if (e.key === 'Enter') addItem(); };
 
+/* ─── 날짜 넘어가기 ───
+   창을 켜둔 채 자정을 넘기면 '오늘'이 어제가 된다. 다시 그리지 않으면
+   오늘 버튼이 잠긴 채로 남고 달력의 오늘 표시도 어제에 머문다. */
+function checkDateRollover() {
+  const now = key(new Date());
+  if (now === today) return;
+  const wasViewingToday = cur === today;
+  today = now;
+  if (wasViewingToday) {
+    cur = now;
+    calMonth = firstOfMonth(cur);
+  }
+  render();
+}
+
+function scheduleMidnight() {
+  const now = new Date();
+  // 자정 2초 뒤로 잡아 시계 오차로 하루 전에 깨는 일을 막는다
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 2);
+  setTimeout(() => { checkDateRollover(); scheduleMidnight(); }, next - now);
+}
+scheduleMidnight();
+
+// 절전에서 깨어나면 위 타이머가 늦게 울릴 수 있어 주기 점검을 같이 둔다
+setInterval(checkDateRollover, 30000);
+document.addEventListener('visibilitychange', checkDateRollover);
+
 const isTextField = el => el && /^(INPUT|TEXTAREA)$/.test(el.tagName);
 
 // 창이 활성화돼 있으면 어디를 클릭했든 타이핑은 입력칸으로 간다.
@@ -1735,7 +1762,7 @@ function focusInput() {
   (searchOpen ? searchInput : input).focus();
 }
 
-addEventListener('focus', focusInput);
+addEventListener('focus', () => { checkDateRollover(); focusInput(); });
 addEventListener('mouseup', () => setTimeout(focusInput, 0));
 addEventListener('keydown', e => {
   if (e.ctrlKey && !e.altKey && !e.metaKey && e.key.toLowerCase() === 'f') {
